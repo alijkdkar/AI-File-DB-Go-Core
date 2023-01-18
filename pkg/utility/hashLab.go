@@ -3,17 +3,19 @@ package utility
 import (
 	"crypto/aes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
 )
 
 func EncryptAES(key []byte, plaintext string) (string, error) {
+
 	// create cipher
 	c, err := aes.NewCipher(key)
 
 	if err != nil {
 		CheckError(err)
-		return "", nil
+		return "", errors.New(" Encrypt AES Error => " + err.Error())
 	}
 	// allocate space for ciphered data
 	out := make([]byte, len(plaintext))
@@ -49,10 +51,14 @@ func CheckError(er error) {
 func GetKey(key string) []byte {
 
 	if key == "" {
-		if key1, err := ioutil.ReadFile("Hashkey.key"); err != nil {
-			key = string(key1)
-		}
-	}
+		key1, err := ioutil.ReadFile("key.key")
 
+		if err != nil {
+			panic("Hash Key mising")
+
+		}
+		key = string(key1)
+
+	}
 	return []byte(key)
 }
