@@ -8,18 +8,20 @@ import (
 
 func main() {
 
-	file := entity.File{}
-	if hashValue, file, err := file.Load("test.txt").GetHash(); err == nil {
-		fmt.Println("lent :", len(hashValue))
-		file.SaveHash("Hashed.txt")
-	}
+	// file := entity.File{}
+	// if hashValue, file, err := file.Load("A.jpg").GetHash(); err == nil {
+	// 	fmt.Println("lent :", len(hashValue))
+	// 	file.SaveHash("Hashed.txt")
+	// }
 
 	file1 := entity.File{}
 
 	txtplan, f, er := file1.Load("Hashed.txt").GetTextPlain()
 	if er == nil {
 		fmt.Println(txtplan)
-		f.Save("unhashed.txt")
+		f.Save("b.jpg")
+	} else {
+		fmt.Println(er)
 	}
 
 }

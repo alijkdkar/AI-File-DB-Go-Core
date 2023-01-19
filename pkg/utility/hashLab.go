@@ -1,48 +1,53 @@
 package utility
 
 import (
+	"bytes"
 	"crypto/aes"
-	"encoding/hex"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"strings"
 )
 
-func EncryptAES(key []byte, plaintext string) (string, error) {
+// func EncryptAES(key []byte, plaintext string) (string, error) {
 
-	// create cipher
-	c, err := aes.NewCipher(key)
+// 	// create cipher
+// 	c, err := aes.NewCipher(key)
 
-	if err != nil {
-		CheckError(err)
-		return "", errors.New(" Encrypt AES Error => " + err.Error())
-	}
-	// allocate space for ciphered data
-	out := make([]byte, len(plaintext))
+// 	if err != nil {
+// 		CheckError(err)
+// 		return "", errors.New(" Encrypt AES Error => " + err.Error())
+// 	}
+// 	// allocate space for ciphered data
+// 	out := make([]byte, len(plaintext))
 
-	// encrypt
-	c.Encrypt(out, []byte(plaintext))
-	// return hex string
-	return hex.EncodeToString(out), nil
-}
+// 	// encrypt
+// 	c.Encrypt(out, []byte(plaintext))
+// 	// return hex string
+// 	return hex.EncodeToString(out), nil
+// }
 
-func DecryptAES(key []byte, ct string) (string, error) {
+// func DecryptAES(key []byte, ct string) (string, error) {
 
-	ciphertext, _ := hex.DecodeString(ct)
+// 	ciphertext, _ := hex.DecodeString(ct)
 
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		CheckError(err)
-		return "", err
-	}
+// 	c, err := aes.NewCipher(key)
+// 	if err != nil {
+// 		CheckError(err)
+// 		return "", err
+// 	}
 
-	pt := make([]byte, len(ciphertext))
-	c.Decrypt(pt, ciphertext)
+// 	pt := make([]byte, len(ciphertext))
+// 	c.Decrypt(pt, ciphertext)
 
-	s := string(pt[:])
+// 	s := string(pt[:])
 
-	return s, nil
-}
+// 	return s, nil
+// }
 
 func CheckError(er error) {
 	fmt.Println(er)
@@ -62,3 +67,88 @@ func GetKey(key string) []byte {
 	}
 	return []byte(key)
 }
+
+func addBase64Padding(value string) string {
+	m := len(value) % 4
+	if m != 0 {
+		value += strings.Repeat("=", 4-m)
+	}
+
+	return value
+}
+
+func removeBase64Padding(value string) string {
+	return strings.Replace(value, "=", "", -1)
+}
+
+func Pad(src []byte) []byte {
+	padding := aes.BlockSize - len(src)%aes.BlockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(src, padtext...)
+}
+
+func Unpad(src []byte) ([]byte, error) {
+	length := len(src)
+	unpadding := int(src[length-1])
+
+	if unpadding > length {
+		return nil, errors.New("unpad error. This could happen when incorrect encryption key is used")
+	}
+
+	return src[:(length - unpadding)], nil
+}
+
+func Encrypt(key []byte, text string) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	msg := Pad([]byte(text))
+	ciphertext := make([]byte, aes.BlockSize+len(msg))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	cfb := cipher.NewCFBEncrypter(block, iv)
+	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(msg))
+	finalMsg := removeBase64Padding(base64.URLEncoding.EncodeToString(ciphertext))
+	return finalMsg, nil
+}
+
+func Decrypt(key []byte, text string) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	decodedMsg, err := base64.URLEncoding.DecodeString(addBase64Padding(text))
+	if err != nil {
+		return "", err
+	}
+
+	if (len(decodedMsg) % aes.BlockSize) != 0 {
+		return "", errors.New("blocksize must be multipe of decoded message length")
+	}
+
+	iv := decodedMsg[:aes.BlockSize]
+	msg := decodedMsg[aes.BlockSize:]
+
+	cfb := cipher.NewCFBDecrypter(block, iv)
+	cfb.XORKeyStream(msg, msg)
+
+	unpadMsg, err := Unpad(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return string(unpadMsg), nil
+}
+
+// func main() {
+//     key := []byte("LKHlhb899Y09olUi")
+//     encryptMsg, _ := encrypt(key, "Hello World")
+//     msg, _ := decrypt(key, encryptMsg)
+//     fmt.Println(msg) // Hello World
+// }
