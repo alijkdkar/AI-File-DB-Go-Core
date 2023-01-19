@@ -26,10 +26,10 @@ func (f *File) GetHash() (string, *File, error) {
 	totlaHash := ""
 	for _, v := range strings.Split(f.FileStringContaint, "\n") {
 		if v != "" {
-			fmt.Println("Line before hash:", v)
+			// fmt.Println("Line before hash:", v)
 			// hash, err := utility.EncryptAES(utility.GetKey(""), string(v))
 			hash, err := utility.Encrypt(utility.GetKey(""), string(v))
-			fmt.Println("hash Line:", hash)
+			//fmt.Println("hash Line:", hash)
 			totlaHash += (hash + "@@@\n")
 			if err != nil {
 				return "", f, errors.New("getFileHash Error => " + err.Error())
@@ -48,10 +48,10 @@ func (f *File) GetTextPlain() (string, *File, error) {
 	for _, v := range strings.Split(f.FileStringContaint, "@@@\n") {
 		if strings.TrimSpace(v) != "" && strings.TrimSpace(v) != "\n" {
 			// unhashedLine, err := utility.DecryptAES(utility.GetKey(""), v)
-			fmt.Println("unhashed line1:", v)
+			// fmt.Println("unhashed line1:", v)
 			unhashedLine, err := utility.Decrypt(utility.GetKey(""), string(v))
 
-			fmt.Println("unhashed line", unhashedLine)
+			//fmt.Println("unhashed line", unhashedLine)
 
 			if err != nil {
 				return "", f, errors.New("GetPlainText" + err.Error())
@@ -77,14 +77,15 @@ func (f *File) Load(filePath string) *File {
 	// }
 	scanner := bufio.NewScanner(filecontaint)
 	for scanner.Scan() {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>")
 		f.FileStringContaint += (scanner.Text() + "\n")
 	}
 	if err := scanner.Err(); err != nil {
 		panic(err.Error())
 	}
 
-	fmt.Println(f.FileStringContaint)
+	f.FileName = strings.Split(filePath, ".")[0]
+	f.Extention = strings.Split(filePath, ".")[1]
+	fmt.Println("File Loadded", f.FileName, f.Extention)
 
 	return f
 }

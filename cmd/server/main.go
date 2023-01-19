@@ -16,9 +16,9 @@ func main() {
 
 	file1 := entity.File{}
 
-	txtplan, f, er := file1.Load("Hashed.txt").GetTextPlain()
+	_, f, er := file1.Load("Hashed.txt").GetTextPlain()
 	if er == nil {
-		fmt.Println(txtplan)
+		//fmt.Println(txtplan)
 		f.Save("b.jpg")
 	} else {
 		fmt.Println(er)
