@@ -90,7 +90,7 @@ func (f *File) Load(filePath string) *File {
 	return f
 }
 
-func (f *File) Save(filePath string) error {
+func (f *File) Save(filePath, FileName string) error {
 	err := ioutil.WriteFile(filePath, []byte(f.FileContaint), 0644) //0660
 	if err != nil {
 		return errors.New("Error to write file" + err.Error())
@@ -98,9 +98,12 @@ func (f *File) Save(filePath string) error {
 	return nil
 }
 
-func (f *File) SaveHash(filePath string) error {
+func (f *File) SaveHash(filePath, FileName string) error {
 	if f.HashValue == "" {
 		f.HashValue, _, _ = f.GetHash()
+	}
+	if filePath == "" {
+		filePath = f.FileName + ".hsh"
 	}
 
 	err := ioutil.WriteFile(filePath, []byte(f.HashValue), 0644) //0660
